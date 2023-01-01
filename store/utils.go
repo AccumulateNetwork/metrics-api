@@ -1,4 +1,4 @@
-package global
+package store
 
 import (
 	"strings"
@@ -6,6 +6,7 @@ import (
 	"github.com/AccumulateNetwork/metrics-api/schema"
 )
 
+// SearchStakingRecordByIdentity searches staking record by Identity (case insensitive)
 func SearchStakingRecordByIdentity(identity string) *schema.StakingRecord {
 
 	for _, r := range StakingRecords.Items {

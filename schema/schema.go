@@ -8,6 +8,7 @@ type StakingRecord struct {
 	Rewards            string `json:"rewards" validate:"required"`
 	Delegate           string `json:"delegate"`
 	AcceptingDelegates string `json:"acceptingDelegates"`
+	EntryHash          string `json:"entryHash"`
 }
 
 type StakingRecords struct {

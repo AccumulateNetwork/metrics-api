@@ -7,8 +7,7 @@ import (
 	"os/signal"
 	"strconv"
 
-	"github.com/AccumulateNetwork/metrics-api/global"
-
+	"github.com/AccumulateNetwork/metrics-api/store"
 	"go.neonxp.dev/jsonrpc2/rpc"
 	"go.neonxp.dev/jsonrpc2/transport"
 )
@@ -44,7 +43,7 @@ func StartAPI(port int) error {
 }
 
 func (s *Server) Staking(ctx context.Context, _ *NoArgs) (interface{}, error) {
-	return &global.StakingRecords, nil
+	return &store.StakingRecords, nil
 }
 
 type NoArgs struct {

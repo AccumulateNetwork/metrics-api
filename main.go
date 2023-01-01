@@ -7,8 +7,8 @@ import (
 
 	"github.com/AccumulateNetwork/metrics-api/accumulate"
 	"github.com/AccumulateNetwork/metrics-api/api"
-	"github.com/AccumulateNetwork/metrics-api/global"
 	"github.com/AccumulateNetwork/metrics-api/schema"
+	"github.com/AccumulateNetwork/metrics-api/store"
 	"github.com/labstack/gommon/log"
 )
 
@@ -19,7 +19,7 @@ const STAKING_DATA_ACCOUNT = "acc://staking.acme/registered"
 
 func main() {
 
-	global.StakingRecords = &schema.StakingRecords{}
+	store.StakingRecords = &schema.StakingRecords{}
 
 	client := accumulate.NewAccumulateClient(ACCUMULATE_API, ACCUMULATE_CLIENT_TIMEOUT)
 
@@ -52,19 +52,22 @@ func getACMEStats(client *accumulate.AccumulateClient, die chan bool) {
 					continue
 				}
 
-				stRecord, err := accumulate.ParseStakingRecord(entryData)
+				stRecord, err := schema.ParseStakingRecord(entryData)
 				if err != nil {
 					log.Error(err)
 					continue
 				}
 
+				// fill entry hash
+				stRecord.EntryHash = entry.EntryHash
+
 				// check if record with this identity already exists
-				exists := global.SearchStakingRecordByIdentity(stRecord.Identity)
+				exists := store.SearchStakingRecordByIdentity(stRecord.Identity)
 
 				// if not found, append new record
 				if exists == nil {
 					log.Info("added staking record for: ", stRecord.Identity)
-					global.StakingRecords.Items = append(global.StakingRecords.Items, stRecord)
+					store.StakingRecords.Items = append(store.StakingRecords.Items, stRecord)
 					continue
 				}
 
@@ -73,7 +76,7 @@ func getACMEStats(client *accumulate.AccumulateClient, die chan bool) {
 
 			}
 
-			log.Info("total staking records: ", len(global.StakingRecords.Items))
+			log.Info("total staking records: ", len(store.StakingRecords.Items))
 
 			time.Sleep(time.Duration(15) * time.Minute)
 

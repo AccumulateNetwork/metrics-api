@@ -1,4 +1,4 @@
-package global
+package store
 
 import "github.com/AccumulateNetwork/metrics-api/schema"
 
