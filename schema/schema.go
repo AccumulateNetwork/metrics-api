@@ -9,6 +9,7 @@ type StakingRecord struct {
 	Delegate           string `json:"delegate"`
 	AcceptingDelegates string `json:"acceptingDelegates"`
 	EntryHash          string `json:"entryHash"`
+	Balance            int64  `json:"balance"`
 }
 
 type StakingRecords struct {

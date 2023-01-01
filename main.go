@@ -3,12 +3,14 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/AccumulateNetwork/metrics-api/accumulate"
 	"github.com/AccumulateNetwork/metrics-api/api"
 	"github.com/AccumulateNetwork/metrics-api/schema"
 	"github.com/AccumulateNetwork/metrics-api/store"
+	"github.com/jinzhu/copier"
 	"github.com/labstack/gommon/log"
 )
 
@@ -44,6 +46,7 @@ func getACMEStats(client *accumulate.AccumulateClient, die chan bool) {
 
 			log.Info("received ", len(stakingData.Items), " data entries from ", STAKING_DATA_ACCOUNT)
 
+			// parse staking data entries
 			for _, entry := range stakingData.Items {
 
 				entryData, err := hex.DecodeString(entry.Entry.Data[0])
@@ -77,6 +80,28 @@ func getACMEStats(client *accumulate.AccumulateClient, die chan bool) {
 			}
 
 			log.Info("total staking records: ", len(store.StakingRecords.Items))
+
+			snapshot := &schema.StakingRecords{}
+			copier.Copy(&snapshot.Items, store.StakingRecords.Items)
+
+			// get ACME balances of stakers
+			for _, record := range snapshot.Items {
+
+				balance, err := client.QueryTokenAccount(&accumulate.Params{URL: record.Stake})
+				if err != nil {
+					log.Error(err)
+					continue
+				}
+
+				record.Balance, err = strconv.ParseInt(balance.Data.Balance, 10, 64)
+				if err != nil {
+					log.Error(err)
+					continue
+				}
+
+			}
+
+			copier.Copy(&store.StakingRecords.Items, snapshot.Items)
 
 			time.Sleep(time.Duration(15) * time.Minute)
 

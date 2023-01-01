@@ -16,6 +16,7 @@ require (
 	github.com/ethereum/go-ethereum v1.10.25 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
+	github.com/jinzhu/copier v0.3.5 // indirect
 	github.com/kardianos/service v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
