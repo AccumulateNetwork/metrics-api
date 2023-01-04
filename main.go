@@ -48,12 +48,12 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 
 			copier.Copy(&acme, acmeData.Data)
 
-			acme.Issued, err = strconv.ParseInt(acmeData.Data.Issued, 10, 64)
+			acme.Total, err = strconv.ParseInt(acmeData.Data.Issued, 10, 64)
 			if err != nil {
 				log.Error(err)
 			}
 
-			acme.SupplyLimit, err = strconv.ParseInt(acmeData.Data.SupplyLimit, 10, 64)
+			acme.Max, err = strconv.ParseInt(acmeData.Data.SupplyLimit, 10, 64)
 			if err != nil {
 				log.Error(err)
 			}

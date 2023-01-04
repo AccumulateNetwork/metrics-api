@@ -17,10 +17,10 @@ type StakingRecords struct {
 }
 
 type ACME struct {
-	Issued      int64  `json:"issued"`
-	SupplyLimit int64  `json:"supplyLimit"`
-	Symbol      string `json:"symbol"`
-	Precision   int64  `json:"precision"`
+	Symbol    string `json:"symbol"`
+	Precision int64  `json:"precision"`
+	Total     int64  `json:"total"`
+	Max       int64  `json:"max"`
 }
 
 type ValidatorsNumber struct {

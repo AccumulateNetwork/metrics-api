@@ -40,13 +40,13 @@ type ErrorResponse struct {
 }
 type SupplyResponse struct {
 	schema.ACME
-	Staked             int64      `json:"staked"`
-	CircSupply         int64      `json:"circSupply"`
-	IssuedRounded      float64    `json:"issued`
-	SupplyLimitRounded float64    `json:"supplyLimitRounded"`
-	StakedRounded      float64    `json:"stakedRounded"`
-	CircSupplyRounded  float64    `json:"circSupplyRounded"`
-	UpdatedAt          *time.Time `json:"updatedAt"`
+	Staked            int64      `json:"staked"`
+	Circulating       int64      `json:"circulating"`
+	TotalTokens       float64    `json:"issuedTokens"`
+	MaxTokens         float64    `json:"maxTokens"`
+	StakedTokens      float64    `json:"stakedTokens"`
+	CirculatingTokens float64    `json:"circulatingTokens"`
+	UpdatedAt         *time.Time `json:"updatedAt"`
 }
 
 type StakingResponse struct {
@@ -87,6 +87,7 @@ func StartAPI(port int) error {
 	publicAPI := api.HTTP.Group("/v1")
 
 	publicAPI.GET("/supply", api.getSupply)
+	publicAPI.GET("/supply/:filter", api.getSupply)
 	publicAPI.GET("/staking", api.getStaking)
 	publicAPI.GET("/staking/stakers", api.getStakers)
 
@@ -135,14 +136,23 @@ func (api *API) getSupply(c echo.Context) error {
 	res := &SupplyResponse{ACME: *store.ACME}
 
 	res.Staked = store.GetTotalStake()
-	res.CircSupply = res.Issued - res.Staked
+	res.Circulating = res.Total - res.Staked
 
-	res.IssuedRounded = math.Round(float64(res.Issued) * math.Pow10(-1*int(res.Precision)))
-	res.SupplyLimitRounded = math.Round(float64(res.SupplyLimit) * math.Pow10(-1*int(res.Precision)))
-	res.CircSupplyRounded = math.Round(float64(res.CircSupply) * math.Pow10(-1*int(res.Precision)))
-	res.StakedRounded = math.Round(float64(res.Staked) * math.Pow10(-1*int(res.Precision)))
+	res.TotalTokens = math.Round(float64(res.Total) * math.Pow10(-1*int(res.Precision)))
+	res.MaxTokens = math.Round(float64(res.Max) * math.Pow10(-1*int(res.Precision)))
+	res.CirculatingTokens = math.Round(float64(res.Circulating) * math.Pow10(-1*int(res.Precision)))
+	res.StakedTokens = math.Round(float64(res.Staked) * math.Pow10(-1*int(res.Precision)))
 
 	res.UpdatedAt = store.UpdatedAt
+
+	switch c.Param("filter") {
+	case "total":
+		return c.String(http.StatusOK, fmt.Sprintf("%.f", res.TotalTokens))
+	case "max":
+		return c.String(http.StatusOK, fmt.Sprintf("%.f", res.MaxTokens))
+	case "circulating":
+		return c.String(http.StatusOK, fmt.Sprintf("%.f", res.CirculatingTokens))
+	}
 
 	return c.JSON(http.StatusOK, res)
 
