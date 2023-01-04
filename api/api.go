@@ -36,9 +36,22 @@ type ErrorResponse struct {
 	Code   int    `json:"code"`
 	Error  string `json:"error"`
 }
+type SupplyResponse struct {
+	SupplyLimit int64 `json:"supplyLimit"`
+	Issued      int64 `json:"issued"`
+	Staked      int64 `json:"staked"`
+}
 
 type StakingResponse struct {
-	Stakers []*schema.StakingRecord
+	APR              float64 `json:"apr"`
+	CoreValidator    int64   `json:"coreValidator"`
+	CoreFollower     int64   `json:"coreFollower"`
+	StakingValidator int64   `json:"stakingValidator"`
+	Delegates        int64   `json:"delegates"`
+	PureStakers      int64   `json:"pureStakers"`
+}
+type StakersResponse struct {
+	Result []*schema.StakingRecord `json:"result"`
 	PaginationResponse
 }
 
@@ -47,9 +60,11 @@ func StartAPI(port int) error {
 
 	api := &API{}
 
-	api.Validate = validator.New()
 	api.HTTP = echo.New()
 	api.HTTP.HideBanner = true
+
+	// init validator v10
+	api.Validate = validator.New()
 
 	// remove trailing slash middleware
 	// https://echo.labstack.com/middleware/trailing-slash/
@@ -69,7 +84,9 @@ func StartAPI(port int) error {
 	})
 	publicAPI := api.HTTP.Group("/v1")
 
+	publicAPI.GET("/supply", api.getSupply)
 	publicAPI.GET("/staking", api.getStaking)
+	publicAPI.GET("/staking/stakers", api.getStakers)
 
 	api.HTTP.Logger.Fatal(api.HTTP.Start(":" + strconv.Itoa(port)))
 
@@ -111,15 +128,33 @@ func (api *API) GetPaginationParams(c echo.Context) (*PaginationParams, error) {
 }
 
 // getStaking returns staking metrics
+func (api *API) getSupply(c echo.Context) error {
+
+	res := &SupplyResponse{}
+
+	return c.JSON(http.StatusOK, res)
+
+}
+
+// getStaking returns staking metrics
 func (api *API) getStaking(c echo.Context) error {
+
+	res := &StakingResponse{}
+
+	return c.JSON(http.StatusOK, res)
+
+}
+
+// getStakers returns stakers
+func (api *API) getStakers(c echo.Context) error {
 
 	params, err := api.GetPaginationParams(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, &ErrorResponse{Code: http.StatusBadGateway, Error: err.Error()})
 	}
 
-	res := &StakingResponse{}
-	res.Stakers = store.StakingRecords.Items[params.Start : params.Start+params.Count]
+	res := &StakersResponse{}
+	res.Result = store.StakingRecords.Items[params.Start : params.Start+params.Count]
 	res.Start = params.Start
 	res.Count = params.Count
 	res.Total = len(store.StakingRecords.Items)
