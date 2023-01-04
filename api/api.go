@@ -152,6 +152,8 @@ func (api *API) getSupply(c echo.Context) error {
 		return c.String(http.StatusOK, fmt.Sprintf("%.f", res.MaxTokens))
 	case "circulating":
 		return c.String(http.StatusOK, fmt.Sprintf("%.f", res.CirculatingTokens))
+	case "staked":
+		return c.String(http.StatusOK, fmt.Sprintf("%.f", res.StakedTokens))
 	}
 
 	return c.JSON(http.StatusOK, res)
