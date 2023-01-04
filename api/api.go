@@ -40,12 +40,13 @@ type ErrorResponse struct {
 }
 type SupplyResponse struct {
 	schema.ACME
-	Staked           int64      `json:"staked"`
-	CircSupply       int64      `json:"circSupply"`
-	SupplyLimitHuman float64    `json:"supplyLimitHuman"`
-	StakedHuman      float64    `json:"stakedHuman"`
-	CircSupplyHuman  float64    `json:"circSupplyHuman"`
-	UpdatedAt        *time.Time `json:"updatedAt"`
+	Staked             int64      `json:"staked"`
+	CircSupply         int64      `json:"circSupply"`
+	IssuedRounded      float64    `json:"issued`
+	SupplyLimitRounded float64    `json:"supplyLimitRounded"`
+	StakedRounded      float64    `json:"stakedRounded"`
+	CircSupplyRounded  float64    `json:"circSupplyRounded"`
+	UpdatedAt          *time.Time `json:"updatedAt"`
 }
 
 type StakingResponse struct {
@@ -136,9 +137,10 @@ func (api *API) getSupply(c echo.Context) error {
 	res.Staked = store.GetTotalStake()
 	res.CircSupply = res.Issued - res.Staked
 
-	res.SupplyLimitHuman = math.Round(float64(res.SupplyLimit) * math.Pow10(-1*int(res.Precision)))
-	res.CircSupplyHuman = math.Round(float64(res.CircSupply) * math.Pow10(-1*int(res.Precision)))
-	res.StakedHuman = math.Round(float64(res.Staked) * math.Pow10(-1*int(res.Precision)))
+	res.IssuedRounded = math.Round(float64(res.Issued) * math.Pow10(-1*int(res.Precision)))
+	res.SupplyLimitRounded = math.Round(float64(res.SupplyLimit) * math.Pow10(-1*int(res.Precision)))
+	res.CircSupplyRounded = math.Round(float64(res.CircSupply) * math.Pow10(-1*int(res.Precision)))
+	res.StakedRounded = math.Round(float64(res.Staked) * math.Pow10(-1*int(res.Precision)))
 
 	res.UpdatedAt = store.UpdatedAt
 
