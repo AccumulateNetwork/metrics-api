@@ -39,6 +39,8 @@ type Token struct {
 	URL         string `json:"url" validate:"required"`
 	Symbol      string `json:"symbol" validate:"required"`
 	Precision   int64  `json:"precision"`
+	Issued      string `json:"issued"`
+	SupplyLimit string `json:"supplyLimit"`
 }
 
 type TokenAccount struct {

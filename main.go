@@ -16,7 +16,9 @@ import (
 const ACCUMULATE_API = "https://mainnet.accumulatenetwork.io/v2"
 const ACCUMULATE_CLIENT_TIMEOUT = 5
 const API_PORT = 8082
+const ACME_TOKEN_ISSUER = "acc://acme"
 const STAKING_DATA_ACCOUNT = "acc://staking.acme/registered"
+const STAKING_PAGESIZE = 10000
 
 func main() {
 
@@ -25,19 +27,29 @@ func main() {
 	client := accumulate.NewAccumulateClient(ACCUMULATE_API, ACCUMULATE_CLIENT_TIMEOUT)
 
 	die := make(chan bool)
-	go getACMEStats(client, die)
+	go getStats(client, die)
 
 	log.Fatal(api.StartAPI(API_PORT))
 }
 
-func getACMEStats(client *accumulate.AccumulateClient, die chan bool) {
+func getStats(client *accumulate.AccumulateClient, die chan bool) {
 
 	for {
 
 		select {
 		default:
 
-			stakingData, err := client.QueryDataSet(&accumulate.Params{URL: STAKING_DATA_ACCOUNT, Count: 10000, Start: 0, Expand: true})
+			acme := &schema.ACME{}
+
+			acmeData, err := client.QueryToken(&accumulate.Params{URL: ACME_TOKEN_ISSUER})
+			if err != nil {
+				log.Error(err)
+			}
+
+			copier.Copy(&acme, acmeData.Data)
+			store.ACME = acme
+
+			stakingData, err := client.QueryDataSet(&accumulate.Params{URL: STAKING_DATA_ACCOUNT, Count: STAKING_PAGESIZE, Start: 0, Expand: true})
 			if err != nil {
 				log.Error(err)
 			}
@@ -101,7 +113,7 @@ func getACMEStats(client *accumulate.AccumulateClient, die chan bool) {
 
 			copier.Copy(&store.StakingRecords.Items, snapshot.Items)
 
-			time.Sleep(time.Duration(15) * time.Minute)
+			time.Sleep(time.Duration(10) * time.Minute)
 
 		case <-die:
 			return

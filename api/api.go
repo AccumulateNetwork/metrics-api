@@ -37,18 +37,17 @@ type ErrorResponse struct {
 	Error  string `json:"error"`
 }
 type SupplyResponse struct {
-	SupplyLimit int64 `json:"supplyLimit"`
-	Issued      int64 `json:"issued"`
-	Staked      int64 `json:"staked"`
+	SupplyLimit int64  `json:"supplyLimit"`
+	Issued      int64  `json:"issued"`
+	Staked      int64  `json:"staked"`
+	CircSupply  int64  `json:"circSupply"`
+	Precision   int64  `json:"precision"`
+	Symbol      string `json:"string"`
 }
 
 type StakingResponse struct {
-	APR              float64 `json:"apr"`
-	CoreValidator    int64   `json:"coreValidator"`
-	CoreFollower     int64   `json:"coreFollower"`
-	StakingValidator int64   `json:"stakingValidator"`
-	Delegates        int64   `json:"delegates"`
-	PureStakers      int64   `json:"pureStakers"`
+	APR float64 `json:"apr"`
+	schema.ValidatorsNumber
 }
 type StakersResponse struct {
 	Result []*schema.StakingRecord `json:"result"`
@@ -127,10 +126,25 @@ func (api *API) GetPaginationParams(c echo.Context) (*PaginationParams, error) {
 
 }
 
-// getStaking returns staking metrics
+// getSupply returns ACME supply
 func (api *API) getSupply(c echo.Context) error {
 
+	var err error
+
 	res := &SupplyResponse{}
+	res.Issued, err = strconv.ParseInt(store.ACME.Issued, 10, 64)
+	if err != nil {
+		log.Error(err)
+	}
+	res.SupplyLimit, err = strconv.ParseInt(store.ACME.SupplyLimit, 10, 64)
+	if err != nil {
+		log.Error(err)
+	}
+	res.Precision = store.ACME.Precision
+	res.Symbol = store.ACME.Symbol
+
+	res.Staked = store.GetTotalStake()
+	res.CircSupply = res.Issued - res.Staked
 
 	return c.JSON(http.StatusOK, res)
 
@@ -139,7 +153,9 @@ func (api *API) getSupply(c echo.Context) error {
 // getStaking returns staking metrics
 func (api *API) getStaking(c echo.Context) error {
 
-	res := &StakingResponse{}
+	validators := store.GetValidatorsNumber()
+
+	res := &StakingResponse{ValidatorsNumber: *validators}
 
 	return c.JSON(http.StatusOK, res)
 

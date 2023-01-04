@@ -15,3 +15,18 @@ type StakingRecord struct {
 type StakingRecords struct {
 	Items []*StakingRecord `json:"items"`
 }
+
+type ACME struct {
+	Issued      string `json:"issued"`
+	SupplyLimit string `json:"supplyLimit"`
+	Symbol      string `json:"symbol"`
+	Precision   int64  `json:"precision"`
+}
+
+type ValidatorsNumber struct {
+	CoreValidator    int64 `json:"coreValidator"`
+	CoreFollower     int64 `json:"coreFollower"`
+	StakingValidator int64 `json:"stakingValidator"`
+	Delegated        int64 `json:"delegated"`
+	Pure             int64 `json:"pure"`
+}

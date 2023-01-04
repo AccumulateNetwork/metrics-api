@@ -18,3 +18,40 @@ func SearchStakingRecordByIdentity(identity string) *schema.StakingRecord {
 	return nil
 
 }
+
+// GetTotalStake returns total staked ACME
+func GetTotalStake() int64 {
+
+	total := int64(0)
+
+	for _, r := range StakingRecords.Items {
+		total += r.Balance
+	}
+
+	return total
+
+}
+
+// GetValidatorsNumber returns number of validators
+func GetValidatorsNumber() *schema.ValidatorsNumber {
+
+	res := &schema.ValidatorsNumber{}
+
+	for _, r := range StakingRecords.Items {
+		switch r.Type {
+		case "coreValidator":
+			res.CoreValidator++
+		case "coreFollower":
+			res.CoreFollower++
+		case "stakingValidator":
+			res.StakingValidator++
+		case "delegated":
+			res.Delegated++
+		default:
+			res.Pure++
+		}
+	}
+
+	return res
+
+}
