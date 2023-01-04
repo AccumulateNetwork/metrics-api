@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/AccumulateNetwork/metrics-api/schema"
+	"github.com/AccumulateNetwork/metrics-api/store"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -117,8 +118,12 @@ func (api *API) getStaking(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, &ErrorResponse{Code: http.StatusBadGateway, Error: err.Error()})
 	}
 
-	log.Debug(params)
+	res := &StakingResponse{}
+	res.Stakers = store.StakingRecords.Items[params.Start : params.Start+params.Count]
+	res.Start = params.Start
+	res.Count = params.Count
+	res.Total = len(store.StakingRecords.Items)
 
-	return nil
+	return c.JSON(http.StatusOK, res)
 
 }
