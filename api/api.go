@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/AccumulateNetwork/metrics-api/schema"
 	"github.com/AccumulateNetwork/metrics-api/store"
@@ -37,16 +38,13 @@ type ErrorResponse struct {
 	Error  string `json:"error"`
 }
 type SupplyResponse struct {
-	SupplyLimit int64  `json:"supplyLimit"`
-	Issued      int64  `json:"issued"`
-	Staked      int64  `json:"staked"`
-	CircSupply  int64  `json:"circSupply"`
-	Precision   int64  `json:"precision"`
-	Symbol      string `json:"string"`
+	schema.ACME
+	Staked     int64      `json:"staked"`
+	CircSupply int64      `json:"circSupply"`
+	UpdatedAt  *time.Time `json:"updatedAt"`
 }
 
 type StakingResponse struct {
-	APR float64 `json:"apr"`
 	schema.ValidatorsNumber
 }
 type StakersResponse struct {
@@ -129,22 +127,12 @@ func (api *API) GetPaginationParams(c echo.Context) (*PaginationParams, error) {
 // getSupply returns ACME supply
 func (api *API) getSupply(c echo.Context) error {
 
-	var err error
-
-	res := &SupplyResponse{}
-	res.Issued, err = strconv.ParseInt(store.ACME.Issued, 10, 64)
-	if err != nil {
-		log.Error(err)
-	}
-	res.SupplyLimit, err = strconv.ParseInt(store.ACME.SupplyLimit, 10, 64)
-	if err != nil {
-		log.Error(err)
-	}
-	res.Precision = store.ACME.Precision
-	res.Symbol = store.ACME.Symbol
+	res := &SupplyResponse{ACME: *store.ACME}
 
 	res.Staked = store.GetTotalStake()
 	res.CircSupply = res.Issued - res.Staked
+
+	res.UpdatedAt = store.UpdatedAt
 
 	return c.JSON(http.StatusOK, res)
 

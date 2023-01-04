@@ -47,6 +47,17 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 			}
 
 			copier.Copy(&acme, acmeData.Data)
+
+			acme.Issued, err = strconv.ParseInt(acmeData.Data.Issued, 10, 64)
+			if err != nil {
+				log.Error(err)
+			}
+
+			acme.SupplyLimit, err = strconv.ParseInt(acmeData.Data.SupplyLimit, 10, 64)
+			if err != nil {
+				log.Error(err)
+			}
+
 			store.ACME = acme
 
 			stakingData, err := client.QueryDataSet(&accumulate.Params{URL: STAKING_DATA_ACCOUNT, Count: STAKING_PAGESIZE, Start: 0, Expand: true})
@@ -112,6 +123,9 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 			}
 
 			copier.Copy(&store.StakingRecords.Items, snapshot.Items)
+
+			now := time.Now()
+			store.UpdatedAt = &now
 
 			time.Sleep(time.Duration(10) * time.Minute)
 
