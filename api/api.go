@@ -1,50 +1,124 @@
 package api
 
 import (
-	"context"
-	"log"
-	"os"
-	"os/signal"
+	"fmt"
+	"net/http"
 	"strconv"
 
-	"github.com/AccumulateNetwork/metrics-api/store"
-	"go.neonxp.dev/jsonrpc2/rpc"
-	"go.neonxp.dev/jsonrpc2/transport"
+	"github.com/AccumulateNetwork/metrics-api/schema"
+	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
 )
 
-type Server struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	r      *rpc.RpcServer
+const DefaultPaginationStart = 0
+const DefaultPaginationCount = 10
+
+type API struct {
+	HTTP     *echo.Echo
+	Validate *validator.Validate
 }
 
+type PaginationParams struct {
+	Start int `json:"start" validate:"min=0"`
+	Count int `json:"count" validate:"min=0"`
+}
+
+type PaginationResponse struct {
+	PaginationParams
+	Total int `json:"total"`
+}
+
+type ErrorResponse struct {
+	Result bool   `json:"result"`
+	Code   int    `json:"code"`
+	Error  string `json:"error"`
+}
+
+type StakingResponse struct {
+	Stakers []*schema.StakingRecord
+	PaginationResponse
+}
+
+// StartAPI configures and starts REST API server
 func StartAPI(port int) error {
 
-	r := rpc.New(
-		rpc.WithTransport(&transport.HTTP{Bind: ":" + strconv.Itoa(port), CORSOrigin: "*"}), // HTTP transport
-	)
+	api := &API{}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
-	defer cancel()
+	api.Validate = validator.New()
+	api.HTTP = echo.New()
+	api.HTTP.HideBanner = true
 
-	s := &Server{
-		ctx:    ctx,
-		cancel: cancel,
-		r:      r,
-	}
+	// remove trailing slash middleware
+	// https://echo.labstack.com/middleware/trailing-slash/
+	api.HTTP.Pre(middleware.RemoveTrailingSlash())
 
-	s.r.Register("staking", rpc.H(s.Staking))
+	// recover middleware
+	// https://echo.labstack.com/middleware/recover/
+	api.HTTP.Use(middleware.Recover())
 
-	if err := s.r.Run(ctx); err != nil {
-		log.Fatal(err)
-	}
+	// logger middleware
+	// https://echo.labstack.com/middleware/logger/
+	api.HTTP.Use(middleware.Logger())
+
+	// v1 public metrics API
+	api.HTTP.GET("/v1", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Accumulate Metrics API")
+	})
+	publicAPI := api.HTTP.Group("/v1")
+
+	publicAPI.GET("/staking", api.getStaking)
+
+	api.HTTP.Logger.Fatal(api.HTTP.Start(":" + strconv.Itoa(port)))
 
 	return nil
+
 }
 
-func (s *Server) Staking(ctx context.Context, _ *NoArgs) (interface{}, error) {
-	return &store.StakingRecords, nil
+// GetPaginationParams parses and validates pagination params
+func (api *API) GetPaginationParams(c echo.Context) (*PaginationParams, error) {
+
+	params := &PaginationParams{Start: DefaultPaginationStart, Count: DefaultPaginationCount}
+
+	if c.QueryParam("start") != "" {
+		start, err := strconv.Atoi(c.QueryParam("start"))
+		if err != nil {
+			err = fmt.Errorf("'start' expected to be an integer, '%s' received", c.QueryParam("start"))
+			log.Error(err)
+			return nil, err
+		}
+		params.Start = start
+	}
+
+	if c.QueryParam("count") != "" {
+		count, err := strconv.Atoi(c.QueryParam("count"))
+		if err != nil {
+			err = fmt.Errorf("'limit' expected to be an integer, '%s' received", c.QueryParam("limit"))
+			log.Error(err)
+			return nil, err
+		}
+		params.Count = count
+	}
+
+	if err := api.Validate.Struct(params); err != nil {
+		return nil, err
+	}
+
+	return params, nil
+
 }
 
-type NoArgs struct {
+// getStaking returns staking metrics
+func (api *API) getStaking(c echo.Context) error {
+
+	params, err := api.GetPaginationParams(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, &ErrorResponse{Code: http.StatusBadGateway, Error: err.Error()})
+	}
+
+	log.Debug(params)
+
+	return nil
+
 }

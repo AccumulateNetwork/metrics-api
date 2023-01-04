@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/hex"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -28,7 +27,6 @@ func main() {
 	die := make(chan bool)
 	go getACMEStats(client, die)
 
-	fmt.Println("Starting Accumulate Staking API at port", API_PORT)
 	log.Fatal(api.StartAPI(API_PORT))
 }
 
@@ -69,12 +67,12 @@ func getACMEStats(client *accumulate.AccumulateClient, die chan bool) {
 
 				// if not found, append new record
 				if exists == nil {
-					log.Info("added staking record for: ", stRecord.Identity)
+					log.Debug("added staking record for: ", stRecord.Identity)
 					store.StakingRecords.Items = append(store.StakingRecords.Items, stRecord)
 					continue
 				}
 
-				log.Info("updated staking record for: ", stRecord.Identity)
+				log.Debug("updated staking record for: ", stRecord.Identity)
 				*exists = *stRecord
 
 			}
