@@ -42,7 +42,7 @@ type SupplyResponse struct {
 	schema.ACME
 	Staked            int64      `json:"staked"`
 	Circulating       int64      `json:"circulating"`
-	TotalTokens       float64    `json:"issuedTokens"`
+	TotalTokens       float64    `json:"totalTokens"`
 	MaxTokens         float64    `json:"maxTokens"`
 	StakedTokens      float64    `json:"stakedTokens"`
 	CirculatingTokens float64    `json:"circulatingTokens"`
