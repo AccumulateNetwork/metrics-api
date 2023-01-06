@@ -1,0 +1,253 @@
+openapi: 3.0.3
+info:
+  title: Accumulate Metrics API
+  version: "1.0"
+  contact:
+    email: support@defidevs.io
+externalDocs:
+  description: Find out more about Accumulate Network
+  url: https://accumulatenetwork.io
+servers:
+  - url: https://metrics.accumulatenetwork.io/v1
+tags:
+  - name: supply
+    description: ACME token supply
+  - name: staking
+    description: Staking metrics
+paths:
+  /supply:
+    get:
+      tags:
+        - supply
+      summary: Get ACME supply
+      operationId: getSupply
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supply'
+  /supply/{type}:
+    get:
+      tags:
+        - supply
+      summary: Get specific supply number
+      operationId: getSupplyType
+      parameters:
+        - name: type
+          in: path
+          description: Supply type
+          required: true
+          schema:
+            type: string
+            enum:
+              - max
+              - total
+              - staked
+              - circulating
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplyType'
+  /staking:
+    get:
+      tags:
+        - staking
+      summary: Get staking metrics
+      operationId: getStaking
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Staking'
+  /staking/stakers:
+    get:
+      tags:
+        - staking
+      summary: Get stakers
+      operationId: getStakers
+      parameters: [
+        $ref: '#/components/parameters/PaginationStart',
+        $ref: '#/components/parameters/PaginationCount'
+      ]
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stakers'
+components:
+  schemas:
+    PaginationStart:
+      type: integer
+      description: 'Pagination start'
+      example: 0
+      default: 0
+    PaginationCount:
+      type: integer
+      description: 'Pagination page size'
+      example: 10
+      default: 10
+    PaginationTotal:
+      type: integer
+      description: 'Total number of items'
+      example: 105
+    Supply:
+      type: object
+      properties:
+        symbol:
+          type: string
+          description: 'Token symbol'
+          example: 'ACME'
+        precision:
+          type: integer
+          format: int64
+          description: 'Token precision'
+          example: 8
+        total:
+          type: integer
+          format: int64
+          description: 'Total supply'
+          example: 21091473519485401
+        max:
+          type: integer
+          format: int64
+          description: 'Max supply'
+          example: 50000000000000000
+        staked:
+          type: integer
+          format: int64
+          description: 'Staked'
+          example: 15624358460340869
+        circulating:
+          type: integer
+          format: int64
+          description: 'Circulating supply'
+          example: 5467115059144532
+        totalTokens:
+          type: integer
+          format: int64
+          description: 'Total supply (amount in tokens, human-readable)'
+          example: 210914735
+        maxTokens:
+          type: integer
+          format: int64
+          description: 'Max supply (amount in tokens, human-readable)'
+          example: 500000000
+        stakedTokens:
+          type: integer
+          format: int64
+          description: 'Staked (amount in tokens, human-readable)'
+          example: 156243584
+        circulatingTokens:
+          type: integer
+          format: int64
+          description: 'Circulating supply (amount in tokens, human-readable)'
+          example: 54671150
+        updatedAt:
+          type: string
+          format: date-time
+          description: 'Snapshot date'
+    SupplyType:
+      type: integer
+      example: 210914735
+    Staking:
+      type: object
+      properties:
+        coreValidator:
+          type: integer
+          format: int64
+          description: 'Number of core validators'
+          example: 23
+        coreFollower:
+          type: integer
+          format: int64
+          description: 'Number of core followers'
+          example: 17
+        stakingValidator:
+          type: integer
+          format: int64
+          description: 'Number of staking validators'
+          example: 3
+        delegated:
+          type: integer
+          format: int64
+          description: 'Number of delegates'
+          example: 119
+        pure:
+          type: integer
+          format: int64
+          description: 'Number of pure stakers'
+          example: 0
+    Stakers:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                description: 'Type of staker'
+                example: 'coreValidator'
+              status:
+                type: string
+                description: 'Staker status'
+                example: 'registered'
+              identity:
+                type: string
+                description: 'Staker ADI'
+                example: 'acc://HighStakes.acme'
+              stake:
+                type: string
+                description: 'Staking token account'
+                example: 'acc://HighStakes.acme/CashCow'
+              rewards:
+                type: string
+                description: 'Staking rewards token account'
+                example: 'acc://HighStakes.acme/CashCow'
+              delegate:
+                type: string
+                description: 'Delegation'
+                example: ''
+              acceptingDelegates:
+                type: string
+                description: 'Whether validator accepts delegates or not'
+                example: 'yes'
+              entryHash:
+                type: string
+                description: 'Latest staking data entry'
+                example: '6e6acd248e71eb9bcd4cc5128e2826e771043692770d8e3d45eacddc2678b42e'
+              balance:
+                type: integer
+                format: int64
+                description: 'Staking balance'
+                example: 5869831294125
+        start:
+          $ref: '#/components/schemas/PaginationStart'
+        count:
+          $ref: '#/components/schemas/PaginationCount'
+        total:
+          $ref: '#/components/schemas/PaginationTotal'
+  parameters:
+    PaginationStart:
+      name: 'start'
+      description: 'Pagination start'
+      in: query
+      schema:
+         $ref: '#/components/schemas/PaginationStart'
+    PaginationCount:
+      name: 'count'
+      description: 'Pagination page size'
+      in: query
+      schema:
+         $ref: '#/components/schemas/PaginationCount'
+            
