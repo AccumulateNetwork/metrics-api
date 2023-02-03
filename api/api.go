@@ -180,7 +180,13 @@ func (api *API) getStakers(c echo.Context) error {
 	}
 
 	res := &StakersResponse{}
-	res.Result = store.StakingRecords.Items[params.Start : params.Start+params.Count]
+
+	lastElementIndex := params.Start + params.Count
+	if lastElementIndex > len(store.StakingRecords.Items) {
+		lastElementIndex = len(store.StakingRecords.Items)
+	}
+
+	res.Result = store.StakingRecords.Items[params.Start:lastElementIndex]
 	res.Start = params.Start
 	res.Count = params.Count
 	res.Total = len(store.StakingRecords.Items)
