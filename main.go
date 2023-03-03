@@ -124,6 +124,31 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 
 			copier.Copy(&store.StakingRecords.Items, snapshot.Items)
 
+			foundationTotalBalance := int64(0)
+
+			// get ACME balances of the foundation accounts
+			for _, foundationAcc := range store.FoundationAccounts {
+
+				balance, err := client.QueryTokenAccount(&accumulate.Params{URL: foundationAcc})
+				if err != nil {
+					log.Error(err)
+					continue
+				}
+
+				parsedBalance, err := strconv.ParseInt(balance.Data.Balance, 10, 64)
+				if err != nil {
+					log.Error(err)
+					continue
+				}
+
+				foundationTotalBalance += parsedBalance
+
+			}
+
+			log.Info("foundation total balance: ", foundationTotalBalance)
+
+			copier.Copy(&store.FoundationTotalBalance, foundationTotalBalance)
+
 			now := time.Now()
 			store.UpdatedAt = &now
 
