@@ -18,7 +18,7 @@ var FoundationAccounts = []string{
 	"acc://accumulate.acme/ecosystem/grants",
 	"acc://accumulate.acme/governance/grants",
 	"acc://accumulate.acme/grant-block",
-	"acc://accumulate.acme/stake",
+	// "acc://accumulate.acme/stake",
 }
 
 var FoundationTotalBalance int64
