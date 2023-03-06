@@ -136,7 +136,7 @@ func (api *API) getSupply(c echo.Context) error {
 	res := &SupplyResponse{ACME: *store.ACME}
 
 	res.Staked = store.GetTotalStake()
-	res.Circulating = res.Total - res.Staked - store.FoundationTotalBalance
+	res.Circulating = res.Total - store.FoundationTotalBalance
 
 	res.TotalTokens = math.Round(float64(res.Total) * math.Pow10(-1*int(res.Precision)))
 	res.MaxTokens = math.Round(float64(res.Max) * math.Pow10(-1*int(res.Precision)))
