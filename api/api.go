@@ -10,6 +10,7 @@ import (
 	"github.com/AccumulateNetwork/metrics-api/schema"
 	"github.com/AccumulateNetwork/metrics-api/store"
 	"github.com/go-playground/validator/v10"
+	"github.com/jinzhu/copier"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -24,8 +25,9 @@ type API struct {
 }
 
 type PaginationParams struct {
-	Start int `json:"start" validate:"min=0"`
-	Count int `json:"count" validate:"min=0"`
+	Start int    `json:"start" validate:"min=0"`
+	Count int    `json:"count" validate:"min=0"`
+	Order string `json:"order"`
 }
 
 type PaginationResponse struct {
@@ -100,7 +102,7 @@ func StartAPI(port int) error {
 // GetPaginationParams parses and validates pagination params
 func (api *API) GetPaginationParams(c echo.Context) (*PaginationParams, error) {
 
-	params := &PaginationParams{Start: DefaultPaginationStart, Count: DefaultPaginationCount}
+	params := &PaginationParams{Start: DefaultPaginationStart, Count: DefaultPaginationCount, Order: schema.DefaultOrder}
 
 	if c.QueryParam("start") != "" {
 		start, err := strconv.Atoi(c.QueryParam("start"))
@@ -120,6 +122,10 @@ func (api *API) GetPaginationParams(c echo.Context) (*PaginationParams, error) {
 			return nil, err
 		}
 		params.Count = count
+	}
+
+	if c.QueryParam("order") == schema.AlternativeOrder {
+		params.Order = schema.AlternativeOrder
 	}
 
 	if err := api.Validate.Struct(params); err != nil {
@@ -181,15 +187,22 @@ func (api *API) getStakers(c echo.Context) error {
 
 	res := &StakersResponse{}
 
-	lastElementIndex := params.Start + params.Count
-	if lastElementIndex > len(store.StakingRecords.Items) {
-		lastElementIndex = len(store.StakingRecords.Items)
+	stakers := &schema.StakingRecords{}
+	copier.Copy(&stakers.Items, store.StakingRecords.Items)
+
+	if c.QueryParam("sort") != "" {
+		stakers.Sort(c.QueryParam("sort"), params.Order)
 	}
 
-	res.Result = store.StakingRecords.Items[params.Start:lastElementIndex]
+	lastElementIndex := params.Start + params.Count
+	if lastElementIndex > len(stakers.Items) {
+		lastElementIndex = len(stakers.Items)
+	}
+
+	res.Result = stakers.Items[params.Start:lastElementIndex]
 	res.Start = params.Start
 	res.Count = params.Count
-	res.Total = len(store.StakingRecords.Items)
+	res.Total = len(stakers.Items)
 
 	return c.JSON(http.StatusOK, res)
 
