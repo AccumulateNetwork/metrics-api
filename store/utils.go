@@ -7,9 +7,9 @@ import (
 )
 
 // SearchStakingRecordByIdentity searches staking record by Identity (case insensitive)
-func SearchStakingRecordByIdentity(identity string) *schema.StakingRecord {
+func SearchStakingRecordByIdentity(identity string, records []*schema.StakingRecord) *schema.StakingRecord {
 
-	for _, r := range StakingRecords.Items {
+	for _, r := range records {
 		if strings.EqualFold(r.Identity, identity) {
 			return r
 		}

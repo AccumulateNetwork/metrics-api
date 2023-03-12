@@ -46,7 +46,7 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 				log.Error(err)
 			}
 
-			copier.Copy(&acme, acmeData.Data)
+			copier.Copy(&acme, &acmeData.Data)
 
 			acme.Total, err = strconv.ParseInt(acmeData.Data.Issued, 10, 64)
 			if err != nil {
@@ -67,6 +67,9 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 
 			log.Info("received ", len(stakingData.Items), " data entries from ", STAKING_DATA_ACCOUNT)
 
+			snapshot := &schema.StakingRecords{}
+			copier.Copy(&snapshot.Items, &store.StakingRecords.Items)
+
 			// parse staking data entries
 			for _, entry := range stakingData.Items {
 
@@ -86,12 +89,12 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 				stRecord.EntryHash = entry.EntryHash
 
 				// check if record with this identity already exists
-				exists := store.SearchStakingRecordByIdentity(stRecord.Identity)
+				exists := store.SearchStakingRecordByIdentity(stRecord.Identity, snapshot.Items)
 
 				// if not found, append new record
 				if exists == nil {
 					log.Debug("added staking record for: ", stRecord.Identity)
-					store.StakingRecords.Items = append(store.StakingRecords.Items, stRecord)
+					snapshot.Items = append(snapshot.Items, stRecord)
 					continue
 				}
 
@@ -100,10 +103,7 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 
 			}
 
-			log.Info("total staking records: ", len(store.StakingRecords.Items))
-
-			snapshot := &schema.StakingRecords{}
-			copier.Copy(&snapshot.Items, store.StakingRecords.Items)
+			log.Info("total staking records: ", len(stakingData.Items))
 
 			// get ACME balances of stakers
 			for _, record := range snapshot.Items {
@@ -122,7 +122,7 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 
 			}
 
-			copier.Copy(&store.StakingRecords.Items, snapshot.Items)
+			copier.Copy(&store.StakingRecords.Items, &snapshot.Items)
 
 			foundationTotalBalance := int64(0)
 
@@ -147,12 +147,12 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 
 			log.Info("foundation total balance: ", foundationTotalBalance)
 
-			copier.Copy(&store.FoundationTotalBalance, foundationTotalBalance)
+			copier.Copy(&store.FoundationTotalBalance, &foundationTotalBalance)
 
 			now := time.Now()
 			store.UpdatedAt = &now
 
-			time.Sleep(time.Duration(10) * time.Minute)
+			time.Sleep(time.Duration(1) * time.Minute)
 
 		case <-die:
 			return
