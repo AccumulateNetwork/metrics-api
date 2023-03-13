@@ -16,6 +16,20 @@ type StakingRecords struct {
 	Items []*StakingRecord `json:"items"`
 }
 
+type Validator struct {
+	Type               string `json:"type"`
+	Identity           string `json:"identity"`
+	Stake              string `json:"stake"`
+	Rewards            string `json:"rewards"`
+	Balance            int64  `json:"balance"`
+	AcceptingDelegates string `json:"acceptingDelegates"`
+	TotalStaked        int64  `json:"totalStaked"`
+}
+
+type Validators struct {
+	Items []*Validator `json:"items"`
+}
+
 type ACME struct {
 	Symbol    string `json:"symbol"`
 	Precision int64  `json:"precision"`

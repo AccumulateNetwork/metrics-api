@@ -54,3 +54,35 @@ func (sr *StakingRecords) Sort(sorting string, order string) {
 	}
 
 }
+
+// Sort sorts validators by `sort` field and `order` ordering
+func (v *Validators) Sort(sorting string, order string) {
+
+	switch sorting {
+	case "balance":
+		sort.Slice(v.Items[:], func(i, j int) bool {
+			if order == AlternativeOrder {
+				return v.Items[i].Balance > v.Items[j].Balance
+			} else {
+				return v.Items[i].Balance < v.Items[j].Balance
+			}
+		})
+	case "identity":
+		sort.Slice(v.Items[:], func(i, j int) bool {
+			if order == AlternativeOrder {
+				return v.Items[i].Identity > v.Items[j].Identity
+			} else {
+				return v.Items[i].Identity < v.Items[j].Identity
+			}
+		})
+	case "totalStaked":
+		sort.Slice(v.Items[:], func(i, j int) bool {
+			if order == AlternativeOrder {
+				return v.Items[i].TotalStaked > v.Items[j].TotalStaked
+			} else {
+				return v.Items[i].TotalStaked < v.Items[j].TotalStaked
+			}
+		})
+	}
+
+}

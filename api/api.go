@@ -59,6 +59,11 @@ type StakersResponse struct {
 	PaginationResponse
 }
 
+type ValidatorsResponse struct {
+	Result []*schema.Validator `json:"result"`
+	PaginationResponse
+}
+
 // StartAPI configures and starts REST API server
 func StartAPI(port int) error {
 
@@ -92,6 +97,7 @@ func StartAPI(port int) error {
 	publicAPI.GET("/supply/:filter", api.getSupply)
 	publicAPI.GET("/staking", api.getStaking)
 	publicAPI.GET("/staking/stakers", api.getStakers)
+	publicAPI.GET("/validators", api.getValidators)
 
 	api.HTTP.Logger.Fatal(api.HTTP.Start(":" + strconv.Itoa(port)))
 
@@ -203,6 +209,36 @@ func (api *API) getStakers(c echo.Context) error {
 	res.Start = params.Start
 	res.Count = params.Count
 	res.Total = len(stakers.Items)
+
+	return c.JSON(http.StatusOK, res)
+
+}
+
+// getValidators returns validators
+func (api *API) getValidators(c echo.Context) error {
+
+	params, err := api.GetPaginationParams(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, &ErrorResponse{Code: http.StatusBadGateway, Error: err.Error()})
+	}
+
+	res := &ValidatorsResponse{}
+
+	validators := store.GetValidators()
+
+	if c.QueryParam("sort") != "" {
+		validators.Sort(c.QueryParam("sort"), params.Order)
+	}
+
+	lastElementIndex := params.Start + params.Count
+	if lastElementIndex > len(validators.Items) {
+		lastElementIndex = len(validators.Items)
+	}
+
+	res.Result = validators.Items[params.Start:lastElementIndex]
+	res.Start = params.Start
+	res.Count = params.Count
+	res.Total = len(validators.Items)
 
 	return c.JSON(http.StatusOK, res)
 
