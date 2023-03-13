@@ -94,7 +94,7 @@ func GetValidators() *schema.Validators {
 	for _, r := range StakingRecords.Items {
 		if r.Type == "delegated" {
 			exists := SearchValidatorByIdentity(r.Delegate, res.Items)
-			if exists.AcceptingDelegates == "yes" {
+			if exists != nil {
 				exists.TotalStaked += r.Balance
 			}
 		}
