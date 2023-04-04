@@ -97,7 +97,7 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 					exists := store.SearchStakingRecordByIdentity(stRecordV2.Identity, snapshot.Items)
 
 					if exists != nil {
-						store.RemoveStakingRecordsByIdentity(stRecordV2.Identity, snapshot.Items)
+						snapshot.Items = store.RemoveStakingRecordsByIdentity(stRecordV2.Identity, snapshot.Items)
 					}
 
 					for _, account := range stRecordV2.Accounts {
@@ -118,7 +118,7 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 						stRecord.Stake = account.Stake
 						stRecord.Type = account.Type
 
-						log.Debug("added staking record for: ", stRecord.Identity)
+						log.Info("added staking record for: ", stRecord.Identity)
 						snapshot.Items = append(snapshot.Items, stRecord)
 					}
 				} else {
@@ -151,7 +151,6 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 				balance, err := client.QueryTokenAccount(&accumulate.Params{URL: record.Stake})
 				if err != nil {
 					log.Error(err)
-					log.Info(record)
 					continue
 				}
 
