@@ -11,6 +11,19 @@ type StakingRecord struct {
 	EntryHash          string `json:"entryHash"`
 	Balance            int64  `json:"balance"`
 }
+type StakingRecordV2 struct {
+	Status   string                    `json:"status"`
+	Identity string                    `json:"identity" validate:"required"`
+	Accounts []*StakingRecordV2Account `json:"accounts" validate:"required"`
+}
+
+type StakingRecordV2Account struct {
+	Type               string `json:"type" validate:"required"`
+	Stake              string `json:"url" validate:"required"`
+	Rewards            string `json:"payout" validate:"required"`
+	Delegate           string `json:"delegate"`
+	AcceptingDelegates string `json:"acceptingDelegates"`
+}
 
 type StakingRecords struct {
 	Items []*StakingRecord `json:"items"`

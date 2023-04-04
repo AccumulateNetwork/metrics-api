@@ -79,27 +79,67 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 					continue
 				}
 
+				stRecordV2 := &schema.StakingRecordV2{}
+
 				stRecord, err := schema.ParseStakingRecord(entryData)
 				if err != nil {
-					log.Error(err)
-					continue
+					// fallback
+					stRecordV2, err = schema.ParseStakingRecordV2(entryData)
+					if err != nil {
+						log.Error(err, " ", entry.EntryHash)
+						continue
+					}
 				}
 
-				// fill entry hash
-				stRecord.EntryHash = entry.EntryHash
+				if stRecordV2.Identity != "" {
+					// v2 case
+					// check if record with this identity and stake already exists
+					exists := store.SearchStakingRecordByIdentity(stRecordV2.Identity, snapshot.Items)
 
-				// check if record with this identity already exists
-				exists := store.SearchStakingRecordByIdentity(stRecord.Identity, snapshot.Items)
+					if exists != nil {
+						store.RemoveStakingRecordsByIdentity(stRecordV2.Identity, snapshot.Items)
+					}
 
-				// if not found, append new record
-				if exists == nil {
-					log.Debug("added staking record for: ", stRecord.Identity)
-					snapshot.Items = append(snapshot.Items, stRecord)
-					continue
+					for _, account := range stRecordV2.Accounts {
+
+						// declare stRecord for each account
+						stRecord = &schema.StakingRecord{}
+
+						// fill identity
+						stRecord.Identity = stRecordV2.Identity
+
+						// fill entry hash
+						stRecord.EntryHash = entry.EntryHash
+
+						// fill fields
+						stRecord.AcceptingDelegates = account.AcceptingDelegates
+						stRecord.Delegate = account.Delegate
+						stRecord.Rewards = account.Rewards
+						stRecord.Stake = account.Stake
+						stRecord.Type = account.Type
+
+						log.Debug("added staking record for: ", stRecord.Identity)
+						snapshot.Items = append(snapshot.Items, stRecord)
+					}
+				} else {
+					// v1 case
+
+					// fill entry hash
+					stRecord.EntryHash = entry.EntryHash
+
+					// check if record with this identity and stake already exists
+					exists := store.SearchStakingRecordByIdentity(stRecord.Identity, snapshot.Items)
+
+					// if not found, append new record
+					if exists == nil {
+						log.Debug("added staking record for: ", stRecord.Identity)
+						snapshot.Items = append(snapshot.Items, stRecord)
+						continue
+					}
+
+					log.Debug("updated staking record for: ", stRecord.Identity)
+					*exists = *stRecord
 				}
-
-				log.Debug("updated staking record for: ", stRecord.Identity)
-				*exists = *stRecord
 
 			}
 
@@ -111,6 +151,7 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 				balance, err := client.QueryTokenAccount(&accumulate.Params{URL: record.Stake})
 				if err != nil {
 					log.Error(err)
+					log.Info(record)
 					continue
 				}
 

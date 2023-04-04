@@ -19,6 +19,32 @@ func SearchStakingRecordByIdentity(identity string, records []*schema.StakingRec
 
 }
 
+// RemoveStakingRecordsByIdentity searches staking records by Identity (case insensitive) and removes them
+func RemoveStakingRecordsByIdentity(identity string, records []*schema.StakingRecord) []*schema.StakingRecord {
+
+	for i, r := range records {
+		if strings.EqualFold(r.Identity, identity) {
+			return append(records[:i], records[i+1:]...)
+		}
+	}
+
+	return nil
+
+}
+
+// SearchStakingRecordByIdentity searches staking record by Identity (case insensitive)
+func SearchStakingRecordByIdentityAndAccount(identity string, stake string, records []*schema.StakingRecord) *schema.StakingRecord {
+
+	for _, r := range records {
+		if strings.EqualFold(r.Identity, identity) && strings.EqualFold(r.Stake, stake) {
+			return r
+		}
+	}
+
+	return nil
+
+}
+
 // SearchValidatorByIdentity searches validator by Identity (case insensitive)
 func SearchValidatorByIdentity(identity string, validators []*schema.Validator) *schema.Validator {
 
