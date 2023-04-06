@@ -22,13 +22,14 @@ func SearchStakingRecordByIdentity(identity string, records []*schema.StakingRec
 // RemoveStakingRecordsByIdentity searches staking records by Identity (case insensitive) and removes them
 func RemoveStakingRecordsByIdentity(identity string, records []*schema.StakingRecord) []*schema.StakingRecord {
 
-	for i, r := range records {
-		if strings.EqualFold(r.Identity, identity) {
-			return append(records[:i], records[i+1:]...)
+	for i := 0; i < len(records); i++ {
+		if strings.EqualFold(records[i].Identity, identity) {
+			records = append(records[:i], records[i+1:]...)
+			i--
 		}
 	}
 
-	return nil
+	return records
 
 }
 
