@@ -8,6 +8,7 @@ import (
 
 var StakingRecords *schema.StakingRecords
 var ACME *schema.ACME
+var Tokens *schema.Tokens
 var UpdatedAt *time.Time
 
 var FoundationAccounts = []string{
@@ -19,7 +20,6 @@ var FoundationAccounts = []string{
 	"acc://accumulate.acme/governance/grants",
 	"acc://accumulate.acme/grant-block",
 	"acc://accumulate.acme/stake",
-	"acc://defi-growth-fund.acme/liquid-staking-rewards-boost",
 }
 
 var FoundationTotalBalance int64

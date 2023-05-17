@@ -53,6 +53,27 @@ func ParseStakingRecordV2(entry []byte) (*StakingRecordV2, error) {
 
 }
 
+// ParseTokenRecord parses Accumulate token entry data into struct and validates it
+func ParseTokenRecord(entry []byte) (*Token, error) {
+
+	var err error
+
+	// unmarshal data entry into token
+	res := &Token{}
+	if err = json.Unmarshal(entry, &res); err != nil {
+		return nil, err
+	}
+
+	// validate staking record
+	validate := validator.New()
+	if err = validate.Struct(res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+
+}
+
 // Sort sorts staking records by `sort` field and `order` ordering
 func (sr *StakingRecords) Sort(sorting string, order string) {
 

@@ -46,6 +46,19 @@ func SearchStakingRecordByIdentityAndAccount(identity string, stake string, reco
 
 }
 
+// SearchTokenByTokenIssuer searches staking record by Identity (case insensitive)
+func SearchTokenByTokenIssuer(tokenIssuer string, records []*schema.Token) *schema.Token {
+
+	for _, r := range records {
+		if strings.EqualFold(r.TokenIssuer, tokenIssuer) {
+			return r
+		}
+	}
+
+	return nil
+
+}
+
 // SearchValidatorByIdentity searches validator by Identity (case insensitive)
 func SearchValidatorByIdentity(identity string, validators []*schema.Validator) *schema.Validator {
 

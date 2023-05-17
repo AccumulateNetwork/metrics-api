@@ -19,10 +19,13 @@ const API_PORT = 8082
 const ACME_TOKEN_ISSUER = "acc://acme"
 const STAKING_DATA_ACCOUNT = "acc://staking.acme/registered"
 const STAKING_PAGESIZE = 10000
+const TOKENS_DATA_ACCOUNT = "acc://tokens.acme/list"
+const TOKENS_PAGESIZE = 10000
 
 func main() {
 
 	store.StakingRecords = &schema.StakingRecords{}
+	store.Tokens = &schema.Tokens{}
 
 	client := accumulate.NewAccumulateClient(ACCUMULATE_API, ACCUMULATE_CLIENT_TIMEOUT)
 
@@ -189,10 +192,52 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 
 			copier.Copy(&store.FoundationTotalBalance, &foundationTotalBalance)
 
+			tokensData, err := client.QueryDataSet(&accumulate.Params{URL: TOKENS_DATA_ACCOUNT, Count: TOKENS_PAGESIZE, Start: 0, Expand: true})
+			if err != nil {
+				log.Error(err)
+			}
+
+			log.Info("received ", len(tokensData.Items), " data entries from ", TOKENS_DATA_ACCOUNT)
+
+			tokenSnapshot := &schema.Tokens{}
+			copier.Copy(&tokenSnapshot.Items, &store.Tokens.Items)
+
+			// parse tokens data entries
+			for _, entry := range tokensData.Items {
+
+				entryData, err := hex.DecodeString(entry.Entry.Data[1])
+				if err != nil {
+					log.Error(err)
+					continue
+				}
+
+				tokenRecord, err := schema.ParseTokenRecord(entryData)
+				if err != nil {
+					log.Error(err, " ", entry.EntryHash)
+					continue
+				}
+
+				// check if record with this identity and stake already exists
+				exists := store.SearchTokenByTokenIssuer(tokenRecord.TokenIssuer, tokenSnapshot.Items)
+
+				// if not found, append new record
+				if exists == nil {
+					log.Debug("added token: ", tokenRecord.TokenIssuer)
+					tokenSnapshot.Items = append(tokenSnapshot.Items, tokenRecord)
+					continue
+				}
+
+				log.Debug("updated token: ", tokenRecord.TokenIssuer)
+				*exists = *tokenRecord
+
+			}
+
+			copier.Copy(&store.Tokens.Items, &tokenSnapshot.Items)
+
 			now := time.Now()
 			store.UpdatedAt = &now
 
-			time.Sleep(time.Duration(1) * time.Minute)
+			time.Sleep(time.Duration(5) * time.Minute)
 
 		case <-die:
 			return

@@ -64,6 +64,11 @@ type ValidatorsResponse struct {
 	PaginationResponse
 }
 
+type TokensResponse struct {
+	Result []*schema.Token `json:"result"`
+	PaginationResponse
+}
+
 // StartAPI configures and starts REST API server
 func StartAPI(port int) error {
 
@@ -98,6 +103,7 @@ func StartAPI(port int) error {
 	publicAPI.GET("/staking", api.getStaking)
 	publicAPI.GET("/staking/stakers", api.getStakers)
 	publicAPI.GET("/validators", api.getValidators)
+	publicAPI.GET("/tokens", api.getTokens)
 
 	api.HTTP.Logger.Fatal(api.HTTP.Start(":" + strconv.Itoa(port)))
 
@@ -239,6 +245,33 @@ func (api *API) getValidators(c echo.Context) error {
 	res.Start = params.Start
 	res.Count = params.Count
 	res.Total = len(validators.Items)
+
+	return c.JSON(http.StatusOK, res)
+
+}
+
+// getTokens returns tokens
+func (api *API) getTokens(c echo.Context) error {
+
+	params, err := api.GetPaginationParams(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, &ErrorResponse{Code: http.StatusBadGateway, Error: err.Error()})
+	}
+
+	res := &TokensResponse{}
+
+	tokens := &schema.Tokens{}
+	copier.Copy(&tokens.Items, store.Tokens.Items)
+
+	lastElementIndex := params.Start + params.Count
+	if lastElementIndex > len(tokens.Items) {
+		lastElementIndex = len(tokens.Items)
+	}
+
+	res.Result = tokens.Items[params.Start:lastElementIndex]
+	res.Start = params.Start
+	res.Count = params.Count
+	res.Total = len(tokens.Items)
 
 	return c.JSON(http.StatusOK, res)
 

@@ -57,3 +57,15 @@ type ValidatorsNumber struct {
 	Delegated        int64 `json:"delegated"`
 	Pure             int64 `json:"pure"`
 }
+
+type Token struct {
+	TokenIssuer string `json:"tokenIssuer" validate:"required,startswith=acc://"`
+	Symbol      string `json:"symbol" validate:"required"`
+	Logo        string `json:"logo" validate:"required,url"`
+	Name        string `json:"name" validate:"required"`
+	URL         string `json:"url" validate:"required,url"`
+}
+
+type Tokens struct {
+	Items []*Token `json:"items"`
+}
