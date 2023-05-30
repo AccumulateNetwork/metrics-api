@@ -18,6 +18,9 @@ import (
 
 const DefaultPaginationStart = 0
 const DefaultPaginationCount = 10
+const ErrorCodeBadPagination = -1000
+const ErrorCodeNothingFound = -1001
+const ErrorMessageNothingFound = "searched item not found"
 
 type API struct {
 	HTTP     *echo.Echo
@@ -102,8 +105,11 @@ func StartAPI(port int) error {
 	publicAPI.GET("/supply/:filter", api.getSupply)
 	publicAPI.GET("/staking", api.getStaking)
 	publicAPI.GET("/staking/stakers", api.getStakers)
+	publicAPI.POST("/staking/stakers/search", api.searchStaker)
 	publicAPI.GET("/validators", api.getValidators)
+	publicAPI.POST("/validators/search", api.searchValidator)
 	publicAPI.GET("/tokens", api.getTokens)
+	publicAPI.POST("/tokens/search", api.searchToken)
 
 	api.HTTP.Logger.Fatal(api.HTTP.Start(":" + strconv.Itoa(port)))
 
@@ -194,7 +200,7 @@ func (api *API) getStakers(c echo.Context) error {
 
 	params, err := api.GetPaginationParams(c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, &ErrorResponse{Code: http.StatusBadGateway, Error: err.Error()})
+		return c.JSON(http.StatusBadRequest, &ErrorResponse{Code: ErrorCodeBadPagination, Error: err.Error()})
 	}
 
 	res := &StakersResponse{}
@@ -220,12 +226,29 @@ func (api *API) getStakers(c echo.Context) error {
 
 }
 
+// searchStaker returns tokens
+func (api *API) searchStaker(c echo.Context) error {
+
+	res := &schema.StakingRecord{}
+
+	if c.FormValue("stake") != "" {
+		res = store.SearchStakingRecordByAccount(c.FormValue("stake"), store.StakingRecords.Items)
+	}
+
+	if res == nil || res.Identity == "" {
+		return c.JSON(http.StatusOK, &ErrorResponse{Code: ErrorCodeNothingFound, Error: ErrorMessageNothingFound})
+	}
+
+	return c.JSON(http.StatusOK, res)
+
+}
+
 // getValidators returns validators
 func (api *API) getValidators(c echo.Context) error {
 
 	params, err := api.GetPaginationParams(c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, &ErrorResponse{Code: http.StatusBadGateway, Error: err.Error()})
+		return c.JSON(http.StatusBadRequest, &ErrorResponse{Code: ErrorCodeBadPagination, Error: err.Error()})
 	}
 
 	res := &ValidatorsResponse{}
@@ -250,12 +273,29 @@ func (api *API) getValidators(c echo.Context) error {
 
 }
 
+// searchValidator returns tokens
+func (api *API) searchValidator(c echo.Context) error {
+
+	res := &schema.Validator{}
+
+	if c.FormValue("identity") != "" {
+		res = store.SearchValidatorByIdentity(c.FormValue("identity"), store.GetValidators().Items)
+	}
+
+	if res == nil || res.Identity == "" {
+		return c.JSON(http.StatusOK, &ErrorResponse{Code: ErrorCodeNothingFound, Error: ErrorMessageNothingFound})
+	}
+
+	return c.JSON(http.StatusOK, res)
+
+}
+
 // getTokens returns tokens
 func (api *API) getTokens(c echo.Context) error {
 
 	params, err := api.GetPaginationParams(c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, &ErrorResponse{Code: http.StatusBadGateway, Error: err.Error()})
+		return c.JSON(http.StatusBadRequest, &ErrorResponse{Code: ErrorCodeBadPagination, Error: err.Error()})
 	}
 
 	res := &TokensResponse{}
@@ -272,6 +312,23 @@ func (api *API) getTokens(c echo.Context) error {
 	res.Start = params.Start
 	res.Count = params.Count
 	res.Total = len(tokens.Items)
+
+	return c.JSON(http.StatusOK, res)
+
+}
+
+// searchToken returns tokens
+func (api *API) searchToken(c echo.Context) error {
+
+	res := &schema.Token{}
+
+	if c.FormValue("symbol") != "" {
+		res = store.SearchTokenBySymbol(c.FormValue("symbol"), store.Tokens.Items)
+	}
+
+	if res == nil || res.TokenIssuer == "" {
+		return c.JSON(http.StatusOK, &ErrorResponse{Code: ErrorCodeNothingFound, Error: ErrorMessageNothingFound})
+	}
 
 	return c.JSON(http.StatusOK, res)
 

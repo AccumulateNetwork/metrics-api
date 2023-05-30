@@ -33,6 +33,19 @@ func RemoveStakingRecordsByIdentity(identity string, records []*schema.StakingRe
 
 }
 
+// SearchStakingRecordByAccount searches staking record by Identity (case insensitive)
+func SearchStakingRecordByAccount(stake string, records []*schema.StakingRecord) *schema.StakingRecord {
+
+	for _, r := range records {
+		if strings.EqualFold(r.Stake, stake) {
+			return r
+		}
+	}
+
+	return nil
+
+}
+
 // SearchStakingRecordByIdentity searches staking record by Identity (case insensitive)
 func SearchStakingRecordByIdentityAndAccount(identity string, stake string, records []*schema.StakingRecord) *schema.StakingRecord {
 
@@ -51,6 +64,19 @@ func SearchTokenByTokenIssuer(tokenIssuer string, records []*schema.Token) *sche
 
 	for _, r := range records {
 		if strings.EqualFold(r.TokenIssuer, tokenIssuer) {
+			return r
+		}
+	}
+
+	return nil
+
+}
+
+// SearchTokenBySymbol searches staking record by Symbol (case insensitive)
+func SearchTokenBySymbol(symbol string, records []*schema.Token) *schema.Token {
+
+	for _, r := range records {
+		if strings.EqualFold(r.Symbol, symbol) {
 			return r
 		}
 	}
