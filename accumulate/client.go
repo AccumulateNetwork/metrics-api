@@ -82,6 +82,12 @@ type Params struct {
 	Envelope *protocol.Envelope `json:"envelope"`
 }
 
+type PaginationRepsonse struct {
+	Start int64 `json:"start"`
+	Count int64 `json:"count"`
+	Total int64 `json:"total"`
+}
+
 type QueryADIResponse struct {
 	Data *ADI `json:"data"`
 }
@@ -104,6 +110,7 @@ type QueryDataResponse struct {
 
 type QueryDataSetResponse struct {
 	Items []*DataEntry `json:"items"`
+	*PaginationRepsonse
 }
 
 type QueryPendingChainResponse struct {

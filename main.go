@@ -18,9 +18,8 @@ const ACCUMULATE_CLIENT_TIMEOUT = 5
 const API_PORT = 8082
 const ACME_TOKEN_ISSUER = "acc://acme"
 const STAKING_DATA_ACCOUNT = "acc://staking.acme/registered"
-const STAKING_PAGESIZE = 10000
 const TOKENS_DATA_ACCOUNT = "acc://tokens.acme/list"
-const TOKENS_PAGESIZE = 10000
+const ACCUMULATE_API_PAGESIZE = 100
 
 func main() {
 
@@ -63,9 +62,31 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 
 			store.ACME = acme
 
-			stakingData, err := client.QueryDataSet(&accumulate.Params{URL: STAKING_DATA_ACCOUNT, Count: STAKING_PAGESIZE, Start: 0, Expand: true})
-			if err != nil {
-				log.Error(err)
+			// paging loop
+			stakingData := &accumulate.QueryDataSetResponse{}
+			flagFinished := false
+			start := int64(0)
+
+			for flagFinished != true {
+
+				// query data set
+				resp, err := client.QueryDataSet(&accumulate.Params{URL: STAKING_DATA_ACCOUNT, Count: ACCUMULATE_API_PAGESIZE, Start: start, Expand: true})
+				if err != nil {
+					log.Error(err)
+					continue
+				}
+
+				// append entries
+				stakingData.Items = append(stakingData.Items, resp.Items...)
+
+				// next page
+				start += ACCUMULATE_API_PAGESIZE
+
+				// if pages ended, finish loop
+				if resp.Start+ACCUMULATE_API_PAGESIZE >= resp.Total {
+					flagFinished = true
+				}
+
 			}
 
 			log.Info("received ", len(stakingData.Items), " data entries from ", STAKING_DATA_ACCOUNT)
@@ -192,7 +213,7 @@ func getStats(client *accumulate.AccumulateClient, die chan bool) {
 
 			copier.Copy(&store.FoundationTotalBalance, &foundationTotalBalance)
 
-			tokensData, err := client.QueryDataSet(&accumulate.Params{URL: TOKENS_DATA_ACCOUNT, Count: TOKENS_PAGESIZE, Start: 0, Expand: true})
+			tokensData, err := client.QueryDataSet(&accumulate.Params{URL: TOKENS_DATA_ACCOUNT, Count: ACCUMULATE_API_PAGESIZE, Start: 0, Expand: true})
 			if err != nil {
 				log.Error(err)
 			}
