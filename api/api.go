@@ -57,6 +57,7 @@ type SupplyResponse struct {
 type StakingResponse struct {
 	schema.ValidatorsNumber
 }
+
 type StakersResponse struct {
 	Result []*schema.StakingRecord `json:"result"`
 	PaginationResponse
@@ -106,10 +107,13 @@ func StartAPI(port int) error {
 	publicAPI.GET("/staking", api.getStaking)
 	publicAPI.GET("/staking/stakers", api.getStakers)
 	publicAPI.POST("/staking/stakers/search", api.searchStaker)
+	publicAPI.GET("/staking/stakers/:stake", api.findStaker)
 	publicAPI.GET("/validators", api.getValidators)
 	publicAPI.POST("/validators/search", api.searchValidator)
+	publicAPI.GET("/validators/:identity", api.findValidator)
 	publicAPI.GET("/tokens", api.getTokens)
 	publicAPI.POST("/tokens/search", api.searchToken)
+	publicAPI.GET("/tokens/:symbol", api.findToken)
 
 	api.HTTP.Logger.Fatal(api.HTTP.Start(":" + strconv.Itoa(port)))
 
@@ -243,6 +247,23 @@ func (api *API) searchStaker(c echo.Context) error {
 
 }
 
+// findStaker returns staker by account
+func (api *API) findStaker(c echo.Context) error {
+
+	res := &schema.StakingRecord{}
+
+	if c.Param("stake") != "" {
+		res = store.SearchStakingRecordByAccount(c.Param("stake"), store.StakingRecords.Items)
+	}
+
+	if res == nil || res.Identity == "" {
+		return c.JSON(http.StatusOK, &ErrorResponse{Code: ErrorCodeNothingFound, Error: ErrorMessageNothingFound})
+	}
+
+	return c.JSON(http.StatusOK, res)
+
+}
+
 // getValidators returns validators
 func (api *API) getValidators(c echo.Context) error {
 
@@ -273,13 +294,30 @@ func (api *API) getValidators(c echo.Context) error {
 
 }
 
-// searchValidator returns tokens
+// searchValidator returns validator by identity
 func (api *API) searchValidator(c echo.Context) error {
 
 	res := &schema.Validator{}
 
 	if c.FormValue("identity") != "" {
 		res = store.SearchValidatorByIdentity(c.FormValue("identity"), store.GetValidators().Items)
+	}
+
+	if res == nil || res.Identity == "" {
+		return c.JSON(http.StatusOK, &ErrorResponse{Code: ErrorCodeNothingFound, Error: ErrorMessageNothingFound})
+	}
+
+	return c.JSON(http.StatusOK, res)
+
+}
+
+// findValidator returns validator by identity
+func (api *API) findValidator(c echo.Context) error {
+
+	res := &schema.Validator{}
+
+	if c.Param("identity") != "" {
+		res = store.SearchValidatorByIdentity(c.Param("identity"), store.GetValidators().Items)
 	}
 
 	if res == nil || res.Identity == "" {
@@ -324,6 +362,23 @@ func (api *API) searchToken(c echo.Context) error {
 
 	if c.FormValue("symbol") != "" {
 		res = store.SearchTokenBySymbol(c.FormValue("symbol"), store.Tokens.Items)
+	}
+
+	if res == nil || res.TokenIssuer == "" {
+		return c.JSON(http.StatusOK, &ErrorResponse{Code: ErrorCodeNothingFound, Error: ErrorMessageNothingFound})
+	}
+
+	return c.JSON(http.StatusOK, res)
+
+}
+
+// findToken returns token by symbol
+func (api *API) findToken(c echo.Context) error {
+
+	res := &schema.Token{}
+
+	if c.Param("symbol") != "" {
+		res = store.SearchTokenBySymbol(c.Param("symbol"), store.Tokens.Items)
 	}
 
 	if res == nil || res.TokenIssuer == "" {

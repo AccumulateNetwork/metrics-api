@@ -6,6 +6,8 @@ import (
 	"github.com/AccumulateNetwork/metrics-api/schema"
 )
 
+const ACC_PROTOCOL = "acc://"
+
 // SearchStakingRecordByIdentity searches staking record by Identity (case insensitive)
 func SearchStakingRecordByIdentity(identity string, records []*schema.StakingRecord) *schema.StakingRecord {
 
@@ -37,7 +39,7 @@ func RemoveStakingRecordsByIdentity(identity string, records []*schema.StakingRe
 func SearchStakingRecordByAccount(stake string, records []*schema.StakingRecord) *schema.StakingRecord {
 
 	for _, r := range records {
-		if strings.EqualFold(r.Stake, stake) {
+		if strings.EqualFold(r.Stake, stake) || strings.EqualFold(strings.ReplaceAll(r.Stake, ACC_PROTOCOL, ""), stake) {
 			return r
 		}
 	}
@@ -89,7 +91,7 @@ func SearchTokenBySymbol(symbol string, records []*schema.Token) *schema.Token {
 func SearchValidatorByIdentity(identity string, validators []*schema.Validator) *schema.Validator {
 
 	for _, r := range validators {
-		if strings.EqualFold(r.Identity, identity) {
+		if strings.EqualFold(r.Identity, identity) || strings.EqualFold(strings.ReplaceAll(r.Identity, ACC_PROTOCOL, ""), identity) {
 			return r
 		}
 	}
